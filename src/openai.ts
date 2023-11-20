@@ -5,7 +5,7 @@ import path from "path";
 import crypto from "crypto";
 
 const openai = new OpenAI({
-  apiKey: "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",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export type RunType = OpenAI.Beta.Threads.Runs.Run;
