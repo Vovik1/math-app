@@ -100,5 +100,6 @@ async function saveFileVercelBlob(fileId: string) {
   const blob = await put(filename, image_data_buffer, {
     access: "public",
   });
+  console.log("Blob", blob, blob.url);
   return blob.url;
 }
