@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { existsSync } from "fs";
 import path from "path";
 import crypto from "crypto";
+import { put } from "@vercel/blob";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -65,22 +66,39 @@ export async function responseOpenAi(threadId: string) {
     }
   }
 
-  const promises = imagesArray.map((image) => saveFile(image));
+  const promises =
+    process.env.NODE_ENV === "development"
+      ? imagesArray.map((image) => saveFile(image))
+      : imagesArray.map((image) => saveFileVercelBlob(image));
   const savedImages = await Promise.all(promises);
 
   return { textArray, savedImages };
 }
 
+async function downLoadOpenAIImage(fileId: string) {
+  const response = await openai.files.content(fileId);
+  const image_data = await response.arrayBuffer();
+  const image_data_buffer = Buffer.from(image_data);
+  return image_data_buffer;
+}
+
 async function saveFile(fileId: string) {
+  const image_data_buffer = await downLoadOpenAIImage(fileId);
+  const filename = `grapth_${crypto.randomBytes(8).toString("hex")}.png`;
   const destinationDirPath = path.join(process.cwd(), "public");
   if (!existsSync(destinationDirPath)) {
     fs.mkdirSync(destinationDirPath, { recursive: true });
   }
 
-  const filename = `grapth_${crypto.randomBytes(8).toString("hex")}.png`;
-  const response = await openai.files.content(fileId);
-  const image_data = await response.arrayBuffer();
-  const image_data_buffer = Buffer.from(image_data);
   fs.writeFileSync(path.join(destinationDirPath, filename), image_data_buffer);
   return filename;
+}
+
+async function saveFileVercelBlob(fileId: string) {
+  const image_data_buffer = await downLoadOpenAIImage(fileId);
+  const filename = `grapth_${crypto.randomBytes(8).toString("hex")}.png`;
+  const blob = await put(filename, image_data_buffer, {
+    access: "public",
+  });
+  return blob.url;
 }

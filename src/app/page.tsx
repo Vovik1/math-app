@@ -61,7 +61,7 @@ export default function Home() {
   );
 
   const replaceRedunt = (a: string) => {
-    return a.replaceAll("\\", "");
+    return a.replaceAll("\\", "").replaceAll("$", "");
   };
 
   return (
@@ -116,14 +116,18 @@ export default function Home() {
       {finalData && (
         <div className="flex items-center justify-around mt-12">
           <div className="flex flex-col">
-            {finalData.savedImages.map((imageName, idx) => {
+            {finalData.savedImages.map((imageNameOrUrl, idx) => {
               return (
                 <Image
-                  src={`/${imageName}`}
+                  src={
+                    process.env.NODE_ENV === "development"
+                      ? `/${imageNameOrUrl}`
+                      : `${imageNameOrUrl}`
+                  }
                   alt="grapth"
                   width="600"
                   height="600"
-                  key={`${imageName}-${idx}`}
+                  key={`${imageNameOrUrl}-${idx}`}
                 />
               );
             })}
